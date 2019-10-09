@@ -1,12 +1,13 @@
 from __future__ import division
-import requests
-import time
+
 import csv
+import time
 from multiprocessing import Pool, cpu_count
 from os import getpid
 
+import requests
 
-API_KEY = "RGAPI-45ea7437-01e9-4b30-b710-147df3804c01"
+API_KEY = "RGAPI-aa6adef0-bf2f-4af5-9971-de946dc62732"
 
 
 def read_matches(filename):
@@ -81,6 +82,8 @@ if __name__ == '__main__':
     m_ids = read_matches('more_match_ids.csv')[0]
     m_ids = list(map(lambda k: int(k), m_ids))
     print(f"Fetched {len(m_ids)} matches.")
+    del m_ids[:20000]
+    print(f"Cut first 20,000 elements from m_ids, so there are {len(m_ids)} matches left.")
 
     # unique_summoners = set()
     # summoner_games = {}
