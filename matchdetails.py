@@ -1,13 +1,34 @@
 from __future__ import division
 
 import csv
+import ssl
 import time
-from multiprocessing import Pool, cpu_count
+from multiprocessing import Pool, cpu_count, Value, Lock
 from os import getpid
 
+import OpenSSL
 import requests
+from urllib3 import exceptions
 
-API_KEY = "RGAPI-aa6adef0-bf2f-4af5-9971-de946dc62732"
+API_KEY = "RGAPI-b4a93af7-3e0b-41f3-8921-cf3bc403a327"
+
+
+class Counter(object):
+    def __init__(self, initval=0):
+        self.val = Value('i', initval)
+        self.lock = Lock()
+
+    def increment(self):
+        with self.lock:
+            self.val.value += 1
+
+    def value(self):
+        with self.lock:
+            return self.val.value
+
+    def reset(self):
+        with self.lock:
+            self.val.value = 0
 
 
 def read_matches(filename):
@@ -20,17 +41,32 @@ def extract_match_details(match_ids):
     print(f"Process {getpid()}: Extracting data for match id {match_ids}.")
     #for x in match_ids:
     x = match_ids
-    url = "https://euw1.api.riotgames.com/lol/match/v4/matches/" + str(x) + "?api_key=" + API_KEY
-    request = requests.get(url=url)
-    while request.status_code != 200:
-        if request.status_code == 429:
-            retry = int(request.headers['Retry-After']) + 1
-            print(f"Process {getpid()}: Response code {request.status_code}. Retrying in {retry}s..")
-            time.sleep(retry)
-            request = requests.get(url=url)
-        else:
-            print(f"Response code {request.status_code}. Ending query chain.")
-            return None
+    try:
+        url = "https://euw1.api.riotgames.com/lol/match/v4/matches/" + str(x) + "?api_key=" + API_KEY
+        request = requests.get(url=url)
+        while request.status_code != 200:
+            if request.status_code == 429:
+                retry = int(request.headers['Retry-After']) + 1
+                print(f"Process {getpid()}: Response code {request.status_code}. Retrying in {retry}s..")
+                time.sleep(retry)
+                request = requests.get(url=url)
+            else:
+                print(f"Response code {request.status_code}. Ending query chain.")
+                return None
+    except OpenSSL.SSL.SysCallError as e:
+        print(e)
+        return None
+    except ssl.SSLError as e:
+        print(e)
+        return None
+    except exceptions.MaxRetryError as e:
+        print(e)
+        return None
+    except requests.exceptions.SSLError as e:
+        print(e)
+        return None
+
+    # syscallerror, sslerror, maxretryerror,
 
     data = request.json()
     unique_summoners = set()
@@ -82,8 +118,8 @@ if __name__ == '__main__':
     m_ids = read_matches('more_match_ids.csv')[0]
     m_ids = list(map(lambda k: int(k), m_ids))
     print(f"Fetched {len(m_ids)} matches.")
-    del m_ids[:20000]
-    print(f"Cut first 20,000 elements from m_ids, so there are {len(m_ids)} matches left.")
+    # del m_ids[:20000]
+    # print(f"Cut first 20,000 elements from m_ids, so there are {len(m_ids)} matches left.")
 
     # unique_summoners = set()
     # summoner_games = {}
