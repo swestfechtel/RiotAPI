@@ -1,16 +1,17 @@
 from __future__ import division
 
 import csv
+import signal
 import ssl
 import time
 from multiprocessing import Pool, cpu_count, Value, Lock
-from os import getpid
+from os import getpid, kill
 
 import OpenSSL
 import requests
 from urllib3 import exceptions
 
-API_KEY = "RGAPI-b4a93af7-3e0b-41f3-8921-cf3bc403a327"
+API_KEY = "RGAPI-f46c2e02-d684-4b73-b099-83f1ea9f4024"
 
 
 class Counter(object):
@@ -50,6 +51,9 @@ def extract_match_details(match_ids):
                 print(f"Process {getpid()}: Response code {request.status_code}. Retrying in {retry}s..")
                 time.sleep(retry)
                 request = requests.get(url=url)
+            elif request.status_code == 403:
+                print(f"Process {getpid()}: Response code {request.status_code}. Killing process.")
+                kill(getpid(), signal.SIGKILL)
             else:
                 print(f"Response code {request.status_code}. Ending query chain.")
                 return None
@@ -64,6 +68,9 @@ def extract_match_details(match_ids):
         return None
     except requests.exceptions.SSLError as e:
         print(e)
+        return None
+    except:
+        print("Unknown error. Unable to get further information.")
         return None
 
     # syscallerror, sslerror, maxretryerror,
