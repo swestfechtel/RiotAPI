@@ -11,7 +11,7 @@ import OpenSSL
 import requests
 from urllib3 import exceptions
 
-API_KEY = "RGAPI-d3482789-1a69-4b0f-bb3c-77dfe4036007"
+API_KEY = "RGAPI-a8156ed3-1809-4d12-9da0-b83c1d15cd00"
 
 
 class Counter(object):
@@ -53,7 +53,8 @@ def extract_match_details(match_ids):
                 request = requests.get(url=url)
             elif request.status_code == 403:
                 print(f"Process {getpid()}: Response code {request.status_code}. Killing process.")
-                kill(getpid(), signal.SIGKILL)
+                kill(getpid(), signal.SIGTERM)
+                return None
             else:
                 print(f"Response code {request.status_code}. Ending query chain.")
                 return None
