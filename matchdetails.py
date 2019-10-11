@@ -11,7 +11,7 @@ import OpenSSL
 import requests
 from urllib3 import exceptions
 
-API_KEY = "RGAPI-f46c2e02-d684-4b73-b099-83f1ea9f4024"
+API_KEY = "RGAPI-d3482789-1a69-4b0f-bb3c-77dfe4036007"
 
 
 class Counter(object):
